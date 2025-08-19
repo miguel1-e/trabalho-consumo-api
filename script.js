@@ -1,51 +1,49 @@
-const content = document.getElementById('content');
-let page = Number(window.location.hash.replace("#", ""))
-let maxpage = 0
+const searchInput = document.getElementById('searchInput');
+const cardsContainer = document.getElementById('cardsContainer');
 
-async function getCharacters() {
+searchInput.addEventListener('input', () => {
+  const query = searchInput.value.trim().toLowerCase();
+  if (query.length > 1) {
+    fetchCharacters(query);
+  } else {
+    cardsContainer.innerHTML = '';
+  }
+});
 
-  const response =
-    await fetch(`https://rickandmortyapi.com/api/character${isNaN(page) ? '' : '?page=' + page}`)
-  const data = await response.json()
-  maxpage = data.info.pages
-  const lista = document.createElement('ul')
-  let characters = ''
-  data.results.forEach(element => {
-    characters += `<li>
-      ${element.name}
-      <img src="${element.image}" alt="${element.name}"/>
-    </li>`
+async function fetchCharacters(name) {
+  try {
+    const res = await fetch(`https://rickandmortyapi.com/api/character/?name=${name}`);
+    const data = await res.json();
+
+    if (data.results) {
+      renderCards(data.results);
+    } else {
+      cardsContainer.innerHTML = '<p>Nenhum personagem encontrado.</p>';
+    }
+  } catch (err) {
+    cardsContainer.innerHTML = '<p>Erro ao buscar personagens.</p>';
+    console.error(err);
+  }
+}
+
+function renderCards(characters) {
+  cardsContainer.innerHTML = '';
+
+  characters.forEach(char => {
+    const card = document.createElement('div');
+    card.classList.add('card');
+
+    card.innerHTML = `
+      <img src="${char.image}" alt="${char.name}">
+      <div class="card-content">
+        <h2>${char.name}</h2>
+        <p><strong>Espécie:</strong> ${char.species}</p>
+        <p><strong>Gênero:</strong> ${char.gender}</p>
+        <p><strong>Status:</strong> ${char.status}</p>
+        <p><strong>Dimensão:</strong> ${char.location?.name || 'Desconhecida'}</p>
+      </div>
+    `;
+
+    cardsContainer.appendChild(card);
   });
-  lista.innerHTML = characters
-  content.appendChild(lista)
-
-  let paginate
-  if (!page || page === 1) {
-    paginate = ` <button id="next" onClick="next()" >Proximo</button>`
-  }
-  if (page > 1 && page < maxpage) {
-    paginate = ` <button id="prev" onClick="prev()">Anterior</button>
-    <button id="next" onClick="next()">Proximo</button>
-    `
-  }
-  if (page >= maxpage) {
-    paginate = ` <button id="prev" onClick="prev()">Anterior</button>`
-  }
-
-
-
-  document.getElementById('paginate').innerHTML = paginate
-}
-getCharacters()
-
-
-async function next() {
-  const newPage = page === 0 ? 2 : page + 1
-  window.location.hash = "#" + newPage
-  window.location.reload()
-}
-function prev() {
-  const newPage = page === 0 ? 2 : page - 1
-  window.location.hash = "#" + newPage
-  window.location.reload()
 }
